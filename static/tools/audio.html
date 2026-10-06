@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Audio Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/common.css"><script src="/common.js"></script>
+<style>
+.tabs{display:flex;gap:6px;margin:0 0 16px;padding:5px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);width:max-content;max-width:100%}
+.tabs button{background:none;border:0;color:var(--mut);padding:9px 20px;border-radius:calc(var(--r)*.7);font:700 12px "JetBrains Mono",monospace;cursor:pointer}
+.tabs button.on{background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff}
+.tabs em{font-style:normal;background:rgba(255,255,255,.2);border-radius:10px;padding:1px 7px;margin-left:6px;font-size:10px}
+.pn{display:none}.pn.on{display:block}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.hint{color:var(--mut);font-size:11.5px;margin-top:8px;line-height:1.5}
+.job{border:1px solid var(--line);border-radius:calc(var(--r)*.7);padding:11px 13px;margin-bottom:8px;font-size:12.5px}.job .bar{margin-top:8px}
+.empty{text-align:center;color:var(--mut);padding:26px 10px;font-size:12.5px}
+.toast{display:none;margin-top:12px;padding:10px 12px;border:1px solid var(--acc);border-radius:calc(var(--r)*.7);font-size:12px;background:color-mix(in srgb,var(--acc) 10%,transparent)}
+.hw{display:grid;grid-template-columns:230px 1fr;gap:16px;align-items:start}@media(max-width:850px){.hw{grid-template-columns:1fr}}
+.fd{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:1px solid transparent;color:var(--txt);padding:9px 11px;border-radius:calc(var(--r)*.6);cursor:pointer;font:600 12px Inter,sans-serif;margin-bottom:3px}
+.fd:hover{background:var(--inp)}.fd.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 12%,transparent)}
+.fd span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fd b{color:var(--mut);font:700 10px "JetBrains Mono",monospace}
+.tl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}.tl input{margin:0;flex:1;min-width:150px;font:12px Inter,sans-serif}
+.hr{display:grid;grid-template-columns:34px 1fr auto auto;gap:12px;align-items:center;padding:10px 4px;border-bottom:1px solid var(--line)}
+.hr:last-child{border:0}@media(max-width:700px){.hr{grid-template-columns:34px 1fr}.hr .ha,.hr .hb{grid-column:2}}
+.pb{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--inp);color:var(--txt);cursor:pointer;font-size:11px}.pb.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.ht{font:600 12.5px Inter,sans-serif;line-height:1.3;word-break:break-word}.hs{font-size:10.5px;color:var(--mut);margin-top:3px}
+.ha{font:700 11px "JetBrains Mono",monospace;text-align:right;white-space:nowrap}.ha small{display:block;font-weight:500;color:var(--mut);font-size:10px;margin-top:2px}
+.hb{display:flex;gap:4px}.hb .sm{padding:5px 8px;font-size:10.5px;text-decoration:none}
+.np{font-size:11px;color:var(--acc);min-height:16px;margin-bottom:6px}
+</style></head><body><div class="pg">
+<div class="tabs"><button id="t1" class="on" onclick="tab(1)">CONVERT</button><button id="t2" onclick="tab(2)">RIWAYAT<em id="cnt">0</em></button></div>
+
+<div class="pn on" id="p1"><div class="grid2">
+ <section>
+  <div class="card"><h3>1 · Sumber audio</h3>
+   <label class="fl" style="margin-top:0">Link audio yang boleh kamu gunakan</label><input id="url" placeholder="YouTube / TikTok / SoundCloud">
+   <div class="drop" id="drop"><span id="dn">Atau klik / tarik file audio (mp3, wav, m4a, aac)</span></div><input type="file" id="file" accept=".mp3,.wav,.m4a,.aac" hidden>
+   <label class="fl">Judul (opsional)</label><input id="title" placeholder="Otomatis dari sumber">
+   <label class="k"><input type="checkbox" id="pm">Link ini playlist (antre semua lagu, maks. 30)</label>
+   <label class="k"><input type="checkbox" id="rights">Saya memiliki audio ini atau memiliki izin/lisensi untuk mengolah dan mengunggahnya.</label>
+  </div>
+  <div class="card"><h3>2 · Pengaturan</h3>
+   <div class="two">
+    <div><label class="fl" style="margin-top:0">Volume (dB)</label><input type="number" id="amp" value="-2" min="-20" max="0"></div>
+    <div><label class="fl">Durasi maks. (detik)</label><input type="number" id="maxdur" min="30" max="600" step="10"></div>
+    <div><label class="fl">Format</label><select id="fmt"><option>mp3</option><option>wav</option><option>m4a</option><option>aac</option><option>ogg</option></select></div>
+   </div>
+  </div>
+  <div class="card"><h3>3 · Tujuan</h3>
+   <label class="fl" style="margin-top:0">Folder playlist (opsional)</label><input id="playlist" list="pls" placeholder="Nama folder di Riwayat"><datalist id="pls"></datalist>
+   <label class="k"><input type="checkbox" id="up">Upload ke Roblox setelah convert</label>
+   <div id="acc" class="chipacc" style="display:none"></div>
+   <button class="go" id="go" style="width:100%;margin-top:16px;padding:14px" onclick="start()">➜ Mulai convert</button>
+   <div class="hint" id="msg"></div>
+   <div class="toast" id="toast"></div>
+  </div>
+ </section>
+ <section>
+  <div class="card"><h3>Antrean</h3><div id="jobs"><div class="empty">Belum ada proses.<br>Isi link atau pilih file, lalu klik Mulai.</div></div></div>
+  <div class="card"><h3>Penggunaan yang diizinkan</h3><div class="hint" style="margin:0">Gunakan hanya audio milik sendiri atau yang penggunaannya kamu izinkan. Audio hanya dikonversi formatnya; kecepatan dan pitch tidak diubah.<br>• Isi <b>Folder playlist</b> supaya hasil dikelompokkan di tab Riwayat.<br>• Upload memakai akun aktif dari menu <b>Pengaturan</b>.</div></div>
+ </section>
+</div></div>
+
+<div class="pn" id="p2"><div class="hw">
+ <div class="card" style="margin:0"><h3>Folder</h3><div id="fds"></div></div>
+ <div class="card" style="margin:0">
+  <div class="tl"><input id="q" placeholder="Cari judul…" oninput="draw()"><button class="sm" onclick="loadAll()">Muat ulang</button><button class="sm" onclick="checkMod()">Cek moderasi</button><button class="sm" id="dfb" onclick="delFolder()" style="display:none">Hapus folder ini</button><button class="sm" onclick="delAll()" style="color:#f87171">Hapus semua</button></div>
+  <h3 id="ft" style="font-size:13px"></h3><div class="np" id="np"></div><div id="list"></div>
+ </div>
+</div></div>
+</div>
+<script>
+const $=id=>document.getElementById(id),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cfg=JSON.parse(localStorage.getItem('audioCfg')||'{}');$('fmt').value=cfg.fmt||'mp3';$('maxdur').value=cfg.maxdur||300;
+const accts=JSON.parse(localStorage.getItem('accts')||'[]'),k=a=>a.type+':'+a.cid;
+const cur=accts.find(a=>k(a)==localStorage.getItem('sel'))||accts[0];
+$('acc').innerHTML=cur?`<img src="${esc(cur.avatar||'')}" alt=""><span>Upload sebagai <b>${esc(cur.name)}</b> <span class="m">${esc(cur.handle)}</span></span>`:`<span class="err">Belum ada akun Roblox.</span> <a href="#" onclick="parent.go('settings');return false" style="color:var(--acc)">Isi di Pengaturan</a>`;
+$('up').onchange=()=>$('acc').style.display=$('up').checked?'flex':'none';
+function tab(n){[1,2].forEach(i=>{$('p'+i).classList.toggle('on',i==n);$('t'+i).classList.toggle('on',i==n)});if(n==2)loadAll()}
+let file=null;const dz=$('drop');dz.onclick=()=>$('file').click();
+const pick=f=>{file=f;$('dn').textContent=f?f.name:'Atau klik / tarik file audio (mp3, wav, m4a, aac)'};
+$('file').onchange=e=>pick(e.target.files[0]);
+dz.ondragover=e=>{e.preventDefault();dz.classList.add('o')};dz.ondragleave=()=>dz.classList.remove('o');
+dz.ondrop=e=>{e.preventDefault();dz.classList.remove('o');pick(e.dataTransfer.files[0])};
+const say=(t,c)=>{$('msg').textContent=t;$('msg').className='hint '+(c||'')};
+
+async function start(){
+ if(!$('rights').checked)return say('Konfirmasi hak penggunaan audio sebelum memulai.','err');
+ const fd=new FormData();['amp','maxdur','fmt','title','playlist'].forEach(i=>fd.append(i,$(i).value));fd.append('rights_confirmed','1');
+ const url=$('url').value.trim();if(url)fd.append('url',url);else if(file)fd.append('file',file);else return say('Isi link atau pilih file.','err');
+ if($('pm').checked)fd.append('playlist_mode','1');
+ if($('up').checked){if(!cur)return say('Isi akun Roblox di Pengaturan dulu.','err');fd.append('upload','1');fd.append('key',cur.apiKey);fd.append('cid',cur.cid);fd.append('ctype',cur.type)}
+ $('go').disabled=true;say('Mengirim…');
+ try{const r=await fetch('/api/convert',{method:'POST',body:fd}),j=await r.json();if(!r.ok)throw Error(j.error);
+  (j.ids||[j.id]).forEach(track);say('Masuk antrean ('+(j.total||1)+' lagu).','ok');
+  await loadAll();const pl=$('playlist').value.trim();
+  if(pl||$('pm').checked){const t=$('toast');t.style.display='block';t.innerHTML='📁 Folder <b>'+esc(pl||'playlist')+'</b> sudah dibuat di Riwayat. <a href="#" style="color:var(--acc)" onclick="openFolder(\''+esc(pl).replace(/'/g,"\\'")+'\');return false">Buka</a>'}}
+ catch(e){say(e.message,'err')}$('go').disabled=false}
+function track(id){const d=document.createElement('div');d.className='job';d.innerHTML='<div></div><div class="bar"><i></i></div>';
+ if($('jobs').querySelector('.empty'))$('jobs').innerHTML='';$('jobs').prepend(d);
+ (async function t(){try{const j=await (await fetch('/api/job/'+id)).json();
+  d.firstChild.innerHTML='<b>'+esc((j.label||'').slice(0,70))+'</b><br><span class="'+(j.error?'err':j.done?'ok':'m')+'">'+esc(j.error||j.status)+'</span>';d.querySelector('i').style.width=(j.progress||0)+'%';
+  if(j.done){loadAll();return}}catch(e){}setTimeout(t,1500)})()}
+
+let H=[],PL=[],folder='all',au=new Audio(),playing=-1;
+au.onended=()=>{playing=-1;draw()};
+async function loadAll(){const [h,p]=await Promise.all([fetch('/api/history').then(r=>r.json()),fetch('/api/playlists').then(r=>r.json())]);
+ H=h;PL=p;$('cnt').textContent=H.length;$('pls').innerHTML=PL.map(n=>`<option value="${esc(n)}">`).join('');draw()}
+function openFolder(n){folder=n||'all';tab(2)}
+function draw(){
+ const cnt=n=>H.filter(i=>(i.playlist||'')==n).length,names=[...new Set([...PL,...H.map(i=>i.playlist).filter(Boolean)])];
+ if(folder!='all'&&folder!==''&&!names.includes(folder))folder='all';
+ const fd=(v,ic,l,c)=>`<button class="fd ${folder===v?'on':''}" data-f="${esc(v)}">${ic}<span>${esc(l)}</span><b>${c}</b></button>`;
+ $('fds').innerHTML=fd('all','🎵','Semua',H.length)+names.map(n=>fd(n,'📁',n,cnt(n))).join('')+fd('','📄','Tanpa playlist',cnt(''));
+ $('fds').querySelectorAll('.fd').forEach(b=>b.onclick=()=>{folder=b.dataset.f;draw()});
+ const qs=$('q').value.toLowerCase(),L=H.map((i,x)=>[i,x]).filter(([i])=>(folder=='all'||(i.playlist||'')==folder)&&(!qs||(i.title||'').toLowerCase().includes(qs)));
+ $('ft').textContent=(folder=='all'?'Semua lagu':folder===''?'Tanpa playlist':'📁 '+folder)+' · '+L.length+' lagu';
+ $('dfb').style.display=folder&&folder!='all'?'':'none';
+ $('np').textContent=playing>=0&&H[playing]?'▶ '+H[playing].title:'';
+ $('list').innerHTML=L.map(([i,x])=>{const d=i.time?new Date(i.time*1e3).toLocaleDateString('id-ID',{day:'numeric',month:'short'}):'';
+  return `<div class="hr"><button class="pb ${playing==x?'on':''}" onclick="play(${x})">${playing==x?'❚❚':'▶'}</button>
+  <div><div class="ht">${esc(i.title)}</div><div class="hs">${esc(i.fmt)} · ${i.duration}s · ${i.size} MB${d?' · '+d:''}</div></div>
+  <div class="ha">${i.assetId?esc(i.assetId)+'<small data-a="'+esc(i.assetId)+'">'+esc(i.moderation||'')+'</small>':'<span class="mut">tanpa upload</span>'}</div>
+  <div class="hb">${i.assetId?`<button class="sm" onclick="navigator.clipboard.writeText('${esc(i.assetId)}');this.textContent='✓'">Salin ID</button>`:''}<a class="sm" href="/files/${encodeURIComponent(i.file)}?dl=1" title="Unduh">⬇</a><button class="sm" onclick="ren(${x})" title="Ubah nama">✎</button><button class="sm" onclick="delOne(${x})" title="Hapus" style="color:#f87171">✕</button></div></div>`}).join('')||'<div class="empty">'+(folder&&folder!='all'&&!H.length?'Folder ini kosong. Lagu muncul setelah convert selesai.':'Belum ada lagu di sini.')+'</div>'}
+function play(x){const i=H[x];if(playing==x){au.pause();playing=-1}else{au.src='/files/'+encodeURIComponent(i.file);au.play();playing=x}draw()}
+async function post(url,o){const fd=new FormData();for(const a in o)fd.append(a,o[a]);const r=await fetch(url,{method:'POST',body:fd}),j=await r.json();if(!r.ok)throw Error(j.error);return j}
+async function del(o,msg){if(!confirm(msg))return;if(confirm('Hapus juga file audionya dari folder output?\n\nOK = hapus file, Batal = simpan file'))o.files='1';au.pause();playing=-1;await post('/api/history/delete',o);loadAll()}
+const delOne=x=>del({scope:'one',file:H[x].file,time:H[x].time},'Hapus "'+H[x].title+'" dari riwayat?');
+const delFolder=()=>del({scope:'playlist',name:folder},'Hapus folder "'+folder+'" beserta semua lagu di riwayatnya?');
+const delAll=()=>del({scope:'all'},'Hapus SEMUA riwayat ('+H.length+' lagu)?');
+async function ren(x){const t=prompt('Nama baru:',H[x].title);if(!t)return;try{await post('/api/rename',{file:H[x].file,time:H[x].time,title:t});loadAll()}catch(e){alert(e.message)}}
+async function checkMod(){if(!cur)return alert('Isi akun Roblox di Pengaturan dulu.');
+ const ids=H.map(i=>i.assetId).filter(Boolean);if(!ids.length)return alert('Belum ada lagu yang diupload.');
+ try{const j=await post('/api/status',{key:cur.apiKey,ids:ids.join(',')});await loadAll();document.querySelectorAll('[data-a]').forEach(e=>{const s=j[e.dataset.a];if(s&&s.state=='Error')e.textContent=s.msg})}catch(e){alert(e.message)}}
+loadAll();
+</script></body></html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3D Maker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/common.css"><script src="/common.js"></script>
+<style>
+.r{display:grid;grid-template-columns:1fr 1fr;gap:6px 22px;margin:14px 0}
+.r b{display:flex;justify-content:space-between;font-size:12px}.r output{color:var(--acc)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 12px}
+.seg button{background:var(--bg);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer}
+.seg button.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 18%,transparent)}
+#st{margin:12px 0 0;color:var(--mut)}
+#v{height:560px;border-radius:calc(var(--r)*.8);background:radial-gradient(circle at 50% 45%,#1c1c22,#09090b);position:relative;overflow:hidden;touch-action:none}
+#v canvas{display:block}#em{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--mut)}
+.f{display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--mut)}
+</style></head><body><div class="pg">
+<div class="grid2">
+<section class="card">
+<h2>Bentuk mesh dari gambar</h2>
+<div class="m">Gambar hanya dipakai untuk membaca siluet dan warna. Tidak ada yang diunggah ke server.</div>
+<div class="drop" id="drop"><div id="dn" style="font-weight:600">Pilih PNG, JPG, atau WebP</div><div class="m" id="ds">Klik atau tarik file ke sini - maks. 15 MB</div></div>
+<input id="file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+<label class="k"><input type="checkbox" id="rb" checked>Hapus latar polos otomatis</label>
+<div class="m">Warna yang mirip sudut gambar dibuat transparan, termasuk bagian dalam huruf.</div>
+<div class="r">
+<div><b>Toleransi latar <output id="o1"></output></b><input type="range" id="tol" min="5" max="120" value="48"></div>
+<div><b>Ketebalan <output id="o2"></output></b><input type="range" id="thk" min="0.2" max="4" step="0.1" value="1"></div>
+<div><b>Ukuran maksimum <output id="o3"></output></b><input type="range" id="siz" min="1" max="30" step="0.5" value="6"></div>
+<div><b>Kehalusan kontur <output id="o4"></output></b><input type="range" id="smo" min="0" max="5" step="0.1" value="1.6"></div>
+</div>
+<label class="fl">Detail mesh</label>
+<div class="seg" id="seg"><button data-r="130">Ringan</button><button data-r="220" class="on">Seimbang</button><button data-r="340">Tinggi</button></div>
+<label class="k"><input type="checkbox" id="ar" checked>Putar otomatis</label>
+<div class="m">Geser untuk memutar, scroll untuk zoom.</div>
+<div id="st">Pilih gambar untuk membuat mesh 3D.</div>
+<div class="row" style="margin-top:14px"><button class="go" id="bg" disabled>Unduh GLB (Roblox)</button><button class="sm" id="bo" disabled style="padding:12px 14px">OBJ + MTL</button><button class="sm" id="bt" disabled style="padding:12px 14px">STL</button></div>
+<div class="m" style="margin-top:10px">Roblox Studio: Asset Manager &rarr; Bulk Import (GLB/OBJ/FBX) atau Avatar &rarr; Import 3D. GLB membawa warna lewat vertex color. OBJ memakai file MTL tanpa tekstur. Satu stud dihitung 1 unit.</div>
+</section>
+<section class="card"><div id="v"><div id="em"><div><b>Preview mesh 3D</b><div class="m">Hasil ekstrusi tampil di sini.</div></div></div></div>
+<div class="f"><span id="i1">Belum ada mesh</span><span id="i2">Tarik untuk memutar</span></div></section>
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);let img=null,name='model',mesh=null,data=null,res=220,tmr;
+const outs={tol:['o1',''],thk:['o2',' studs'],siz:['o3',' studs'],smo:['o4',' px']};
+function lab(){for(const k in outs)$(outs[k][0]).textContent=$(k).value+outs[k][1]}
+['tol','thk','siz','smo','rb'].forEach(k=>$(k).addEventListener('input',()=>{lab();sched()}));lab();
+$('seg').onclick=e=>{const b=e.target.closest('button');if(!b)return;[...$('seg').children].forEach(x=>x.classList.remove('on'));b.classList.add('on');res=+b.dataset.r;sched()};
+const drop=$('drop');drop.onclick=()=>$('file').click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('o')};drop.ondragleave=()=>drop.classList.remove('o');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('o');load(e.dataTransfer.files[0])};
+$('file').onchange=e=>load(e.target.files[0]);
+function say(t,c){$('st').textContent=t;$('st').className=c||''}
+function load(f){if(!f)return;if(!/^image\/(png|jpe?g|webp)$/.test(f.type))return say('Format harus PNG, JPG, atau WebP.','err');
+ if(f.size>15*1048576)return say('File lebih dari 15 MB. Perkecil dulu gambarnya.','err');
+ const im=new Image();im.onload=()=>{img=im;name=f.name.replace(/\.[^.]+$/,'').replace(/[^\w-]+/g,'_')||'model';
+ $('dn').textContent=f.name;$('ds').textContent=(f.size/1048576).toFixed(2)+' MB - Gambar diproses lokal';sched(0)};
+ im.onerror=()=>say('Gambar tidak bisa dibaca.','err');im.src=URL.createObjectURL(f)}
+function sched(d=250){if(!img)return;say('Memproses...');clearTimeout(tmr);tmr=setTimeout(build,d)}
+
+function build(){
+ const W0=img.naturalWidth,H0=img.naturalHeight,sc=Math.min(1,900/Math.max(W0,H0));
+ const w=Math.max(2,Math.round(W0*sc)),h=Math.max(2,Math.round(H0*sc));
+ const cv=document.createElement('canvas');cv.width=w;cv.height=h;const cx=cv.getContext('2d',{willReadFrequently:true});cx.drawImage(img,0,0,w,h);
+ const px=cx.getImageData(0,0,w,h).data;
+ let bg=[0,0,0];[[0,0],[w-1,0],[0,h-1],[w-1,h-1]].forEach(([x,y])=>{const i=(y*w+x)*4;for(let k=0;k<3;k++)bg[k]+=px[i+k]/4});
+ const tol=+$('tol').value*1.8,rb=$('rb').checked,m=new Uint8Array(w*h);
+ let x0=w,x1=0,y0=h,y1=0;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;
+  let on=px[i+3]>128;
+  if(on&&rb){if(Math.hypot(px[i]-bg[0],px[i+1]-bg[1],px[i+2]-bg[2])<tol)on=false}
+  if(on){m[y*w+x]=1;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
+ if(x1<x0)return say('Tidak ada bentuk terdeteksi. Naikkan atau turunkan toleransi latar.','err');
+ const bw=x1-x0+1,bh=y1-y0+1,k=res/Math.max(bw,bh),pad=4;
+ const gw=Math.round(bw*k)+pad*2,gh=Math.round(bh*k)+pad*2;
+ let a=new Float32Array(gw*gh);
+ for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){
+  const sx=Math.min(w-1,Math.max(0,Math.floor(x0+(i-pad+.5)/k))),sy=Math.min(h-1,Math.max(0,Math.floor(y0+(j-pad+.5)/k)));
+  a[j*gw+i]=(i>=pad&&i<gw-pad&&j>=pad&&j<gh-pad)?m[sy*w+sx]:0}
+ const passes=Math.round(+$('smo').value*k/(res/220));
+ for(let p=0;p<passes*2;p++)a=blur(a,gw,gh);
+ const P=[],C=[],N=[],th=+$('thk').value,ms=+$('siz').value,u=ms/Math.max(gw-pad*2,gh-pad*2),zf=th/2,zb=-th/2;
+ const col=(gx,gy)=>{const sx=Math.min(w-1,Math.max(0,Math.round(x0+(gx-pad)/k))),sy=Math.min(h-1,Math.max(0,Math.round(y0+(gy-pad)/k))),i=(sy*w+sx)*4;return[px[i]/255,px[i+1]/255,px[i+2]/255]};
+ const cxo=gw/2,cyo=gh/2;
+ const V=(x,y,z,n)=>{P.push((x-cxo)*u,(cyo-y)*u,z);N.push(n[0],n[1],n[2]);C.push(...col(x,y))};
+ const tri=(A,B,Cc,n)=>{V(...A,n);V(...B,n);V(...Cc,n)};
+ const T=.5;
+ for(let j=0;j<gh-1;j++)for(let i=0;i<gw-1;i++){
+  const q=[[i,j+1],[i+1,j+1],[i+1,j],[i,j]],v=q.map(([x,y])=>a[y*gw+x]),ins=v.map(t=>t>=T);
+  if(!ins[0]&&!ins[1]&&!ins[2]&&!ins[3])continue;
+  const poly=[];
+  for(let s=0;s<4;s++){const t=(s+1)%4;
+   if(ins[s])poly.push([q[s][0],q[s][1],0]);
+   if(ins[s]!==ins[t]){const f=(T-v[s])/(v[t]-v[s]);poly.push([q[s][0]+(q[t][0]-q[s][0])*f,q[s][1]+(q[t][1]-q[s][1])*f,1])}}
+  for(let s=1;s<poly.length-1;s++){
+   tri([poly[0][0],poly[0][1],zf],[poly[s][0],poly[s][1],zf],[poly[s+1][0],poly[s+1][1],zf],[0,0,1]);
+   tri([poly[0][0],poly[0][1],zb],[poly[s+1][0],poly[s+1][1],zb],[poly[s][0],poly[s][1],zb],[0,0,-1])}
+  for(let s=0;s<poly.length;s++){const A=poly[s],B=poly[(s+1)%poly.length];
+   if(A[2]&&B[2]){const dx=(B[0]-A[0])*u,dy=-(B[1]-A[1])*u,l=Math.hypot(dx,dy)||1,nn=[dy/l,-dx/l,0];
+    tri([A[0],A[1],zf],[A[0],A[1],zb],[B[0],B[1],zb],nn);tri([A[0],A[1],zf],[B[0],B[1],zb],[B[0],B[1],zf],nn)}}}
+ if(!P.length)return say('Mesh kosong.','err');
+ data={P:new Float32Array(P),C:new Float32Array(C),N:new Float32Array(N)};
+ show();
+ $('i1').textContent=((gw-pad*2)*u).toFixed(1)+' x '+((gh-pad*2)*u).toFixed(1)+' x '+th+' studs';
+ $('i2').textContent=(P.length/9).toLocaleString('id-ID')+' segitiga';
+ say('Mesh siap. Warna gambar dipindahkan ke vertex model.','ok');['bg','bo','bt'].forEach(i=>$(i).disabled=false)}
+function blur(s,w,h){const t=new Float32Array(w*h),o=new Float32Array(w*h);
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){let v=0;for(let d=-1;d<=1;d++)v+=s[y*w+Math.min(w-1,Math.max(0,x+d))];t[y*w+x]=v/3}
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){let v=0;for(let d=-1;d<=1;d++)v+=t[Math.min(h-1,Math.max(0,y+d))*w+x];o[y*w+x]=v/3}return o}
+
+const box=$('v');let R,S,Cm,rx=-.15,ry=.5,dist=14,drag=null;
+function init(){if(R)return;R=new THREE.WebGLRenderer({antialias:true,alpha:true});R.setPixelRatio(devicePixelRatio);box.appendChild(R.domElement);
+ S=new THREE.Scene();Cm=new THREE.PerspectiveCamera(35,1,.1,500);
+ S.add(new THREE.HemisphereLight(0xffffff,0x333338,.9));const d=new THREE.DirectionalLight(0xffffff,1.1);d.position.set(3,5,6);S.add(d);
+ const rs=()=>{R.setSize(box.clientWidth,box.clientHeight);Cm.aspect=box.clientWidth/box.clientHeight;Cm.updateProjectionMatrix()};rs();addEventListener('resize',rs);
+ box.onpointerdown=e=>{drag=[e.clientX,e.clientY];box.setPointerCapture(e.pointerId)};
+ box.onpointerup=()=>drag=null;
+ box.onpointermove=e=>{if(!drag)return;ry+=(e.clientX-drag[0])*.01;rx=Math.max(-1.5,Math.min(1.5,rx+(e.clientY-drag[1])*.01));drag=[e.clientX,e.clientY]};
+ box.onwheel=e=>{e.preventDefault();dist=Math.max(3,Math.min(80,dist*(1+e.deltaY*.001)))};
+ (function loop(){requestAnimationFrame(loop);if(mesh){if($('ar').checked&&!drag)ry+=.006;mesh.rotation.set(rx,ry,0)}
+  Cm.position.set(0,0,dist);R.render(S,Cm)})()}
+function show(){if(typeof THREE==='undefined')return say('Preview butuh internet untuk memuat three.js, tapi unduhan tetap bisa dipakai.','err');
+ init();$('em').style.display='none';if(mesh){S.remove(mesh);mesh.geometry.dispose()}
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(data.P,3));g.setAttribute('normal',new THREE.BufferAttribute(data.N,3));g.setAttribute('color',new THREE.BufferAttribute(data.C,3));
+ mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.45,metalness:.25}));S.add(mesh);
+ dist=Math.max(+$('siz').value*2.4,6)}
+
+function dl(blob,fn){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+$('bo').onclick=()=>{const{P,C}=data,n=P.length/3,L=['# 3D Maker','mtllib '+name+'.mtl','o '+name];
+ for(let i=0;i<n;i++)L.push(`v ${P[i*3].toFixed(4)} ${P[i*3+1].toFixed(4)} ${P[i*3+2].toFixed(4)} ${C[i*3].toFixed(3)} ${C[i*3+1].toFixed(3)} ${C[i*3+2].toFixed(3)}`);
+ L.push('usemtl mat');for(let i=0;i<n;i+=3)L.push(`f ${i+1} ${i+2} ${i+3}`);
+ dl(new Blob([L.join('\n')],{type:'text/plain'}),name+'.obj');
+ setTimeout(()=>dl(new Blob(['newmtl mat\nKa 1 1 1\nKd 1 1 1\nKs 0.2 0.2 0.2\nNs 30\nd 1\nillum 2\n'],{type:'text/plain'}),name+'.mtl'),400)};
+$('bt').onclick=()=>{const{P,N}=data,t=P.length/9,b=new ArrayBuffer(84+t*50),v=new DataView(b);v.setUint32(80,t,true);let o=84;
+ for(let i=0;i<t;i++){for(let k=0;k<3;k++,o+=4)v.setFloat32(o,N[i*9+k],true);for(let k=0;k<9;k++,o+=4)v.setFloat32(o,P[i*9+k],true);o+=2}
+ dl(new Blob([b]),name+'.stl')};
+$('bg').onclick=()=>{const{P,C,N}=data,n=P.length/3,idx=new Uint32Array(n);for(let i=0;i<n;i++)idx[i]=i;
+ const mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(let i=0;i<n;i++)for(let k=0;k<3;k++){mn[k]=Math.min(mn[k],P[i*3+k]);mx[k]=Math.max(mx[k],P[i*3+k])}
+ const parts=[idx.buffer,P.buffer,N.buffer,C.buffer],lens=parts.map(p=>p.byteLength),offs=[0];lens.forEach((l,i)=>offs.push(offs[i]+l));
+ const js={asset:{version:'2.0',generator:'3D Maker'},scene:0,scenes:[{nodes:[0]}],nodes:[{mesh:0,name}],
+  meshes:[{primitives:[{attributes:{POSITION:1,NORMAL:2,COLOR_0:3},indices:0,material:0}]}],
+  materials:[{pbrMetallicRoughness:{baseColorFactor:[1,1,1,1],metallicFactor:.2,roughnessFactor:.6}}],
+  buffers:[{byteLength:offs[4]}],
+  bufferViews:[0,1,2,3].map(i=>({buffer:0,byteOffset:offs[i],byteLength:lens[i],target:i?34962:34963})),
+  accessors:[{bufferView:0,componentType:5125,count:n,type:'SCALAR'},{bufferView:1,componentType:5126,count:n,type:'VEC3',min:mn,max:mx},{bufferView:2,componentType:5126,count:n,type:'VEC3'},{bufferView:3,componentType:5126,count:n,type:'VEC3'}]};
+ const j=new TextEncoder().encode(JSON.stringify(js)),jl=Math.ceil(j.length/4)*4,jp=new Uint8Array(jl).fill(32);jp.set(j);
+ const bl=offs[4],tot=12+8+jl+8+bl,out=new ArrayBuffer(tot),dv=new DataView(out),u8=new Uint8Array(out);
+ dv.setUint32(0,0x46546C67,true);dv.setUint32(4,2,true);dv.setUint32(8,tot,true);dv.setUint32(12,jl,true);dv.setUint32(16,0x4E4F534A,true);u8.set(jp,20);
+ let p=20+jl;dv.setUint32(p,bl,true);dv.setUint32(p+4,0x004E4942,true);p+=8;parts.forEach((b,i)=>u8.set(new Uint8Array(b),p+offs[i]));
+ dl(new Blob([out],{type:'model/gltf-binary'}),name+'.glb')};
+</script></body></html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Animation Re-Uploader</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0c;--card:#141416;--line:#2a2a2e;--acc:#ff2d4a;--acc2:#3b82f6;--txt:#f2f2f2;--mut:#9a9aa3;--gold:#e0a82e}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(900px 400px at 15% 0,color-mix(in srgb,var(--acc) 16%,transparent),transparent),var(--bg);color:var(--txt);font-family:Inter,sans-serif;min-height:100vh}
+.mono{font-family:'JetBrains Mono',monospace}
+header{display:flex;align-items:center;justify-content:space-between;padding:18px 40px;gap:12px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:20px}.logo b{color:var(--acc)}
+.hr{display:flex;gap:10px;align-items:center}
+.dots{display:flex;gap:6px}.dots i{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent}.dots i.on{border-color:#fff}
+.btn-r{background:var(--acc);color:#fff;border:0;padding:10px 16px;font:700 12px 'JetBrains Mono';letter-spacing:1px;cursor:pointer}
+.btn-o{background:transparent;color:var(--txt);border:1px solid var(--line);padding:9px 14px;font:700 12px 'JetBrains Mono';cursor:pointer}
+main{max-width:1300px;margin:0 auto;padding:0 40px 40px}
+.crumb{font:600 11px 'JetBrains Mono';color:var(--mut);letter-spacing:1px;margin:10px 0 24px}.crumb span{color:var(--acc)}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:7px 16px;font:600 11px 'JetBrains Mono';color:var(--acc);letter-spacing:2px}
+h1{font-size:40px;font-weight:800;margin:14px 0 8px;background:linear-gradient(90deg,#b9a3ff,var(--acc2));-webkit-background-clip:text;color:transparent}
+.sub{font-size:16px;max-width:620px;line-height:1.5;margin:0 0 28px}
+.bar{display:flex;gap:10px;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:22px}
+.chip{border:1px solid var(--line);border-radius:8px;padding:7px 12px;font:700 11px 'JetBrains Mono'}
+.chip.red{color:var(--acc);border-color:var(--acc)}
+.grid{display:grid;grid-template-columns:340px 1fr;gap:22px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}header,main{padding-left:16px;padding-right:16px}}
+.card{background:var(--card);padding:22px;margin-bottom:18px}
+.card h3{margin:0 0 16px;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.acct{border:1px solid var(--line);border-radius:14px;padding:10px 14px;display:flex;gap:12px;align-items:center;margin-bottom:8px;cursor:pointer}
+.acct.sel{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 10%,transparent)}
+.acct img{width:36px;height:36px;border-radius:50%;background:#333}
+.acct small{display:block;color:var(--mut);font:11px 'JetBrains Mono'}
+.acct .x{margin-left:auto;color:var(--mut);cursor:pointer}
+input,select,textarea{width:100%;background:#1d1d20;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px;font:13px 'JetBrains Mono';margin-top:8px}
+ol{padding-left:18px;font-size:13px;line-height:1.9;margin:0}
+.warn{color:var(--gold);font-size:12px;line-height:1.5;margin-top:12px}
+.info{border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:18px;font-size:13px;line-height:1.6}
+.info b{font-size:15px}.info code{color:var(--acc)}
+.drop{border:2px dashed #fff;text-align:center;padding:44px 20px;font-size:14px;cursor:pointer;margin-bottom:12px}
+.drop.on{border-color:var(--acc)}
+.drop small{display:block;margin-top:6px;font-size:11px}.drop code{color:var(--acc)}
+.or{text-align:center;font:700 10px 'JetBrains Mono';margin:8px 0}
+label{font-size:13px}
+.ta{background:#e8e8e8;color:#111;height:90px;resize:vertical}
+.go{width:100%;margin-top:14px;padding:14px;border:0;border-radius:14px;font:700 13px 'JetBrains Mono';color:#fff;cursor:pointer;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.go:disabled{opacity:.45;cursor:not-allowed}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+td,th{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left;word-break:break-word}
+th{color:var(--mut);font:600 11px 'JetBrains Mono'}
+.ok{color:#4ade80}.err{color:#f87171}.pend{color:var(--mut)}.run{color:var(--gold)}
+.sm{background:#222;color:#fff;border:1px solid var(--line);padding:5px 10px;font:600 11px 'JetBrains Mono';cursor:pointer;border-radius:6px}
+pre{background:#0d0d0f;border:1px solid var(--line);padding:14px;font:12px 'JetBrains Mono';overflow:auto;max-height:260px;margin:10px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+footer{text-align:center;color:var(--mut);font:600 12px 'JetBrains Mono';padding:24px}
+footer a{color:var(--acc);cursor:pointer}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:9}
+.modal.on{display:flex}
+.modal .box{background:var(--card);border:1px solid var(--line);padding:30px;max-width:420px;text-align:center;border-radius:14px}
+.modal .box h2{margin:0 0 8px}.modal .box p{color:var(--mut);font-size:14px;line-height:1.6}
+.hist-empty{color:var(--mut);font-size:13px}
+</style>
+<link rel="stylesheet" href="/common.css"><script src="/common.js"></script><style>
+header,.crumb,footer,.modal,.tag,h1,.sub{display:none!important}
+body{background-color:var(--bg)!important;background-image:var(--bgi),linear-gradient(rgba(127,127,140,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(127,127,140,.05) 1px,transparent 1px)!important;background-size:auto,44px 44px,44px 44px;font-family:Inter,"Segoe UI",sans-serif}
+main{max-width:1240px!important;padding:0 4px 30px!important}
+.grid{grid-template-columns:minmax(300px,360px) 1fr!important;gap:18px!important;align-items:start}
+.card,.info,.bar{background:var(--card)!important;border:1px solid var(--line)!important;border-radius:var(--r)!important}
+.card{padding:20px!important;margin-bottom:16px!important}.info{padding:16px 20px!important}.bar{margin:0 0 16px!important}
+.card h3{font-size:15px!important;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:14px!important}
+input,select,textarea,.ta{background:var(--inp)!important;color:var(--txt)!important;border-radius:calc(var(--r)*.6)!important;margin-top:6px}
+.sm{background:var(--inp)!important;color:var(--txt)!important}pre{background:var(--inp)!important;color:var(--txt)}
+.go,.acct{border-radius:calc(var(--r)*.8)!important}
+.drop{border:2px dashed var(--line)!important;border-radius:var(--r)}.drop.on,.drop:hover{border-color:var(--acc)!important}
+.chip{color:var(--txt)}.chip.red{color:var(--acc)}.acct small{color:var(--mut)}
+th{color:var(--mut)}
+</style></head>
+<body>
+<header>
+  <div class="logo">ANIMATION <b>RE-UPLOADER</b></div>
+  <div class="hr">
+    <div class="dots" id="dots" title="Tema warna"></div>
+    <button class="btn-o" onclick="openModal()">CREDIT</button>
+  </div>
+</header>
+<main>
+<div class="crumb">HOME › TOOLS › <span>ANIMATION RE-UPLOADER</span></div>
+<span class="tag">⤨ UTILITY</span>
+<h1>Animation Re-Uploader</h1>
+<p class="sub">Upload ulang animasi Roblox ke akun kamu sendiri. Paste ID, dapat Asset ID baru + script siap pakai.</p>
+
+
+<div class="grid">
+<div>
+  <div class="card"><h3>Akun tujuan upload</h3><div id="accts"></div><div class="mut" style="margin-top:6px">Akun &amp; API key dikelola di <a href="#" onclick="parent.go('settings');return false" style="color:var(--acc)">Pengaturan</a>. Klik akun untuk memilih yang aktif.</div></div>
+  <div class="card">
+    <h3>Cara kerja</h3>
+    <ol><li>Tempel link / ID animasi Roblox</li><li>Tambah &amp; pilih akun tujuan upload</li><li>Klik Upload → animasi di-upload ke akunmu</li><li>Dapat Asset ID baru + script siap pakai</li></ol>
+    <div class="warn">Pakai animasi milik sendiri / free / yang kamu punya izinnya. Tanggung jawab ada di kamu sebagai pengguna.</div>
+  </div>
+  <div class="card">
+    <h3>Cara buat API Key</h3>
+    <ol style="line-height:1.7"><li>Buka create.roblox.com → <b>Credentials → API Keys</b></li><li>Tambah API System: <b>Assets</b> (Read + Write) dan <b>Legacy Assets</b> (Manage / Use)</li><li>Isi IP <code>0.0.0.0/0</code> bila perlu, lalu Save &amp; salin key</li><li>Untuk grup, pemilik key harus punya izin upload grup</li></ol>
+  </div>
+</div>
+
+<div>
+  <div class="info"><b>Animasi yang ga bisa lewat web?</b><br>Export animasi dari Studio sebagai <code>.rbxm</code> lalu drag ke kotak di bawah.</div>
+  <div class="card">
+    <div class="drop" id="drop" onclick="file.click()">🎬<br>Drag &amp; drop file <code>.rbxm</code> / <code>.rbxmx</code> di sini<small>animasi punyamu (export Studio / download)</small></div>
+    <input type="file" id="file" accept=".rbxm,.rbxmx" multiple hidden>
+    <div class="or">ATAU</div>
+    <label>Link / ID / Bundle / script daftar <code style="color:var(--acc)">{"NAMA", id},</code> (tanpa batas jumlah)</label>
+    <textarea class="ta" id="ids" placeholder="{&quot;AFROBEAT&quot;, 90441055272503},&#10;{&quot;ATMOSFER&quot;, 94096818139823},&#10;roblox.com/catalog/507771019&#10;5319900634"></textarea>
+    <button class="go" onclick="prepare()" id="prep">➜ Siapkan (0)</button>
+  </div>
+
+  <div class="card" id="queueCard" style="display:none">
+    <h3>Antrean</h3>
+    <table><thead><tr><th>#</th><th>Sumber</th><th>Nama</th><th>Unduh</th><th>Asset ID Baru</th><th>Status</th></tr></thead><tbody id="q"></tbody></table>
+    <div class="row" style="margin-top:14px">
+      <button class="go" id="dlall" style="margin:0;flex:1" onclick="downloadAll()">⬇ Download Semua (ZIP)</button>
+      <button class="go" id="upl" style="margin:0;flex:1" onclick="startUpload()">⬆ Upload ke Akun</button>
+      <button class="sm" id="stopb" style="display:none" onclick="stopFlag=true">⏹ Stop</button>
+    </div>
+    <div id="prog" class="mono" style="margin-top:10px;font-size:12px;color:var(--mut)"></div>
+  </div>
+
+  <div class="card" id="outCard" style="display:none">
+    <h3>Hasil &amp; Script</h3>
+    <div class="row"><select id="fmt" style="width:auto;margin:0" onchange="localStorage.setItem('fmt',this.value);refreshOut()">
+      <option value="table">Daftar {"NAMA", id},</option><option value="lua">Lua dictionary</option><option value="ids">ID saja</option><option value="map">Mapping lama→baru</option></select>
+      <button class="sm" onclick="copyTxt(build($('fmt').value,queue))">Salin Script</button>
+      <button class="sm" onclick="saveText(build($('fmt').value,queue))">Download Script</button></div>
+    <pre id="out"></pre>
+  </div>
+
+  <div class="card">
+    <h3>Riwayat Upload <span class="row"><button class="sm" onclick="copyTxt(build($('fmt').value,hist))">Salin Script Semua</button><button class="sm" onclick="saveText(build($('fmt').value,hist))">Download Script</button><button class="sm" onclick="clearHist()">Hapus</button></span></h3>
+    <div id="hist"></div>
+  </div>
+</div>
+</div>
+</main>
+<footer>Animation Re-Uploader · <a onclick="openModal()">Powered By Yuana</a></footer>
+
+<div class="modal" id="modal" onclick="if(event.target==this)closeModal()">
+  <div class="box"><h2>Animation Re-Uploader</h2><p>Upload ulang animasi Roblox ke akun / grup sendiri lewat Open Cloud API.</p><p><b style="color:var(--acc)">Powered By Yuana</b></p><button class="btn-r" onclick="closeModal()">TUTUP</button></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const THEMES={Merah:['#ff2d4a','#3b82f6'],Biru:['#3b82f6','#8b5cf6'],Hijau:['#22c55e','#06b6d4'],Oranye:['#f97316','#ef4444'],Ungu:['#a855f7','#ec4899']};
+const ls=(k,d)=>JSON.parse(localStorage.getItem(k)||d);
+let accts=ls('accts','[]'), selId=localStorage.getItem('sel')||'', hist=ls('hist','[]'), queue=[], files=[], stopFlag=false;
+$('fmt').value=localStorage.getItem('fmt')||'table';
+
+/* tema */
+function setTheme(n){const [a,b]=THEMES[n];document.documentElement.style.setProperty('--acc',a);document.documentElement.style.setProperty('--acc2',b);localStorage.setItem('theme',n);
+  $('dots').innerHTML=Object.entries(THEMES).map(([k,[c]])=>`<i title="${k}" style="background:${c}" class="${k==n?'on':''}" onclick="setTheme('${k}')"></i>`).join('')}
+
+function openModal(){$('modal').classList.add('on')} function closeModal(){$('modal').classList.remove('on')}
+
+/* akun */
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const keyOf=a=>a.type+':'+a.cid;
+const curAcct=()=>accts.find(a=>keyOf(a)==selId);
+function saveA(){localStorage.setItem('accts',JSON.stringify(accts));localStorage.setItem('sel',selId)}
+function renderAccts(){
+  $('accts').innerHTML=accts.map(a=>`<div class="acct ${keyOf(a)==selId?'sel':''}" onclick="selId='${keyOf(a)}';saveA();renderAccts()">
+   <img src="${a.avatar||''}"><div><b>${esc(a.name)}</b><small>${esc(a.handle)} · ${a.type=='group'?'Grup':'Personal'}</small></div>
+   <span class="x" onclick="event.stopPropagation();delAcct('${keyOf(a)}')">✕</span></div>`).join('')||'<small class="pend">Belum ada akun.</small>'}
+function delAcct(k){accts=accts.filter(a=>keyOf(a)!=k);if(selId==k)selId=accts[0]?keyOf(accts[0]):'';saveA();renderAccts()}
+async function addAcct(){
+  const type=$('ctype').value,cid=$('cid').value.trim(),apiKey=$('key').value.trim();
+  if(!cid||!apiKey)return alert('Isi ID dan API Key.');
+  const r=await fetch('/api/account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({creator_type:type,creator_id:cid})});
+  const j=await r.json(); if(!r.ok)return alert(j.error);
+  const a={...j,type,cid,apiKey}; accts=accts.filter(x=>keyOf(x)!=keyOf(a)); accts.push(a); selId=keyOf(a);
+  $('key').value='';$('cid').value='';saveA();renderAccts()}
+renderAccts();
+
+/* input */
+function updCount(){$('prep').textContent=`➜ Siapkan (${files.length+(($('ids').value.match(/\d{5,}/g)||[]).length)})`}
+$('ids').addEventListener('input',updCount);
+$('file').addEventListener('change',e=>{files=[...files,...e.target.files];updCount()});
+const dz=$('drop');
+['dragover','dragenter'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.add('on')}));
+['dragleave','drop'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.remove('on')}));
+dz.addEventListener('drop',e=>{files=[...files,...[...e.dataTransfer.files].filter(f=>/\.rbxmx?$/i.test(f.name))];updCount()});
+
+async function prepare(){
+  const text=$('ids').value; queue=[];
+  if(text.trim()){
+    const r=await fetch('/api/resolve',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})});
+    (await r.json()).items.forEach(i=>queue.push({src:i.id||i.name,id:i.id,name:i.name,owner:i.owner||'',status:i.error?'err':'pend',msg:i.error||''}));
+  }
+  files.forEach(f=>queue.push({src:f.name,file:f,name:f.name.replace(/\.rbxmx?$/i,''),status:'pend'}));
+  $('queueCard').style.display=queue.length?'block':'none'; $('outCard').style.display='none'; $('prog').textContent=`${queue.length} item siap.`; renderQ()}
+const ST={pend:'Menunggu',ok:'Berhasil',run:'Mengupload…'};
+const DL={ok:'✓',run:'…',err:'✗'};
+function renderQ(){$('q').innerHTML=queue.map((x,i)=>`<tr><td>${i+1}</td><td class="mono">${esc(x.src)}</td><td>${esc(x.name)||'-'}${x.owner?`<br><small class="pend">oleh ${esc(x.owner)}</small>`:''}</td>
+  <td><span class="${x.dl=='ok'?'ok':x.dl=='err'?'err':'pend'}" title="${esc(x.dlmsg||(x.fmt?('Format: '+x.fmt+' | Header: '+x.head):''))}">${DL[x.dl]||''}</span> ${x.id||x.file?`<button class="sm" onclick="dlOne(${i})">⬇</button>`:''}</td>
+  <td class="mono">${x.new_id||'-'}</td><td class="${x.status}">${x.status=='err'?esc(x.msg||'Gagal'):ST[x.status]}</td></tr>`).join('')}
+
+/* download */
+function saveBlob(b,name){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+function saveText(t){const ext=['table','lua'].includes($('fmt').value)?'lua':'txt';saveBlob(new Blob([t],{type:'text/plain'}),`animation_script.${ext}`)}
+const safe=s=>(s||'animation').replace(/[\\/:*?"<>|]/g,'_').trim().slice(0,80)||'animation';
+async function sniffBlob(x){const u=new Uint8Array(await x.blob.slice(0,16).arrayBuffer());
+  const t=new TextDecoder('latin1').decode(u);
+  x.ext=t.startsWith('<roblox!')?'.rbxm':(t.startsWith('<roblox ')||t.startsWith('<?xml'))?'.rbxmx':'.bin';
+  x.head=[...u].map(b=>b.toString(16).padStart(2,'0')).join(' ')+'  |  '+t.replace(/[^\x20-\x7e]/g,'.');
+  x.fmt={'.rbxm':'rbxm (binary)','.rbxmx':'rbxmx (XML)','.bin':'TIDAK DIKENAL sebagai rbxm/rbxmx'}[x.ext]}
+function fname(x){const ext=x.file?(x.file.name.match(/\.rbxmx?$/i)||['.rbxm'])[0]:(x.ext||'.rbxm');return safe(x.name||x.id)+ext}
+async function getBlob(x){
+  if(x.blob)return x.blob; if(x.file){x.blob=x.file;return x.blob}
+  const a=curAcct(); if(!a)throw new Error('Pilih / tambah akun (API key) dulu untuk download.');
+  const fd=new FormData();fd.append('api_key',a.apiKey);fd.append('id',x.id);
+  const r=await fetch('/api/download',{method:'POST',body:fd});
+  if(!r.ok){let m='Download gagal';try{m=(await r.json()).error||m}catch{}throw new Error(m)}
+  x.blob=await r.blob();await sniffBlob(x);return x.blob}
+async function dlOne(i){const x=queue[i];x.dl='run';renderQ();
+  try{saveBlob(await getBlob(x),fname(x));x.dl='ok';x.dlmsg=''}catch(e){x.dl='err';x.dlmsg=e.message;alert(e.message)}renderQ()}
+async function downloadAll(){
+  const items=queue.filter(x=>x.id||x.file); if(!items.length)return;
+  setBusy(true); const got=[],used={};let fail=0;
+  for(let n=0;n<items.length;n++){
+    if(stopFlag)break; const x=items[n]; x.dl='run';renderQ();
+    $('prog').textContent=`Download ${n+1}/${items.length}…`;
+    try{const b=await getBlob(x);const base=fname(x);let nm=base;
+      if(used[base]){const m=base.match(/^(.*)(\.rbxmx?)$/i);nm=`${m[1]} (${used[base]+1})${m[2]}`}
+      used[base]=(used[base]||0)+1;
+      got.push({name:nm,data:new Uint8Array(await b.arrayBuffer())});x.dl='ok';x.dlmsg=''}
+    catch(e){x.dl='err';x.dlmsg=e.message;fail++}
+    renderQ(); await new Promise(r=>setTimeout(r,300));
+  }
+  if(got.length==1)saveBlob(new Blob([got[0].data]),got[0].name);
+  else if(got.length)saveBlob(makeZip(got),'animations.zip');
+  const bins=items.filter(x=>x.ext=='.bin').length;
+  $('prog').textContent=`Download selesai: ${got.length} berhasil, ${fail} gagal.`+(bins?` ${bins} file formatnya tidak dikenal sebagai rbxm (lihat header di tooltip ✓).`:'')+(fail?' (arahkan kursor ke ✗ untuk melihat alasan)':'');
+  setBusy(false)}
+
+/* zip (tanpa kompresi) */
+const CT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CT[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+function makeZip(fl){
+  const enc=new TextEncoder(),parts=[],cd=[];let off=0,cdSize=0;
+  for(const f of fl){
+    const nm=enc.encode(f.name),crc=crc32(f.data),sz=f.data.length;
+    const lh=new DataView(new ArrayBuffer(30));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(12,0x21,true);
+    lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);lh.setUint16(26,nm.length,true);
+    parts.push(lh.buffer,nm,f.data);
+    const ch=new DataView(new ArrayBuffer(46));
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(14,0x21,true);
+    ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);ch.setUint16(28,nm.length,true);ch.setUint32(42,off,true);
+    cd.push(ch.buffer,nm);cdSize+=46+nm.length;off+=30+nm.length+sz;
+  }
+  const end=new DataView(new ArrayBuffer(22));
+  end.setUint32(0,0x06054b50,true);end.setUint16(8,fl.length,true);end.setUint16(10,fl.length,true);end.setUint32(12,cdSize,true);end.setUint32(16,off,true);
+  return new Blob([...parts,...cd,end.buffer],{type:'application/zip'})}
+
+/* upload */
+function setBusy(b){stopFlag=false;$('upl').disabled=b;$('dlall').disabled=b;$('stopb').style.display=b?'inline-block':'none'}
+async function startUpload(){
+  const a=curAcct(); if(!a)return alert('Pilih / tambah akun tujuan dulu.');
+  const todo=queue.filter(x=>(x.id||x.file)&&x.status!='ok'); if(!todo.length)return;
+  setBusy(true); let done=0;
+  for(const x of todo){
+    if(stopFlag)break;
+    x.status='run';renderQ();$('prog').textContent=`Upload ${++done}/${todo.length}…`;
+    const fd=new FormData(); fd.append('api_key',a.apiKey);fd.append('creator_type',a.type);fd.append('creator_id',a.cid);
+    x.file?fd.append('file',x.file):(fd.append('id',x.id),x.name&&fd.append('name',x.name));
+    try{
+      const j=await (await fetch('/api/upload',{method:'POST',body:fd})).json();
+      if(j.ok){x.status='ok';x.new_id=j.new_id;x.name=j.name;
+        hist.unshift({date:new Date().toLocaleString('id-ID'),src:x.src,id:x.id,name:x.name,new_id:x.new_id,acct:a.name});
+        hist=hist.slice(0,2000);localStorage.setItem('hist',JSON.stringify(hist));renderHist()}
+      else{x.status='err';x.msg=j.error}
+    }catch(e){x.status='err';x.msg=e.message}
+    renderQ(); refreshOut(); await new Promise(r=>setTimeout(r,800));
+  }
+  const okc=queue.filter(x=>x.status=='ok').length;
+  $('prog').textContent=`Upload selesai: ${okc} berhasil, ${queue.filter(x=>x.status=='err').length} gagal.`;
+  setBusy(false); refreshOut()}
+
+/* output script */
+const okList=l=>l.filter(x=>x.new_id&&(x.status===undefined||x.status=='ok'));
+const nm=x=>(x.name||x.src||'').replace(/["\\]/g,'');
+function build(kind,list){
+  const o=okList(list);
+  if(kind=='ids')return o.map(x=>x.new_id).join('\n');
+  if(kind=='map')return o.map(x=>`${x.id||x.src} -> ${x.new_id}`).join('\n');
+  if(kind=='table')return o.map(x=>`\t{"${nm(x)}", ${x.new_id}},`).join('\n');
+  return `local Animations = {\n${o.map(x=>`\t["${nm(x)}"] = "rbxassetid://${x.new_id}",`).join('\n')}\n}\n\n-- contoh pakai:\n-- local anim = Instance.new("Animation")\n-- anim.AnimationId = Animations["Nama"]\n-- humanoid:LoadAnimation(anim):Play()\nreturn Animations`}
+function refreshOut(){ if(!okList(queue).length)return; $('outCard').style.display='block';$('out').textContent=build($('fmt').value,queue)}
+function copyTxt(t){navigator.clipboard.writeText(t)}
+
+/* riwayat */
+function renderHist(){
+  $('hist').innerHTML=hist.length?`<table><thead><tr><th>Waktu</th><th>Nama</th><th>ID Lama</th><th>ID Baru</th><th></th></tr></thead><tbody>${hist.map(h=>`<tr><td class="mono">${esc(h.date)}</td><td>${esc(h.name)}</td><td class="mono">${esc(h.id||h.src)}</td><td class="mono">${esc(h.new_id)}</td><td><button class="sm" onclick="copyTxt('${esc(h.new_id)}')">Salin</button></td></tr>`).join('')}</tbody></table>`:'<div class="hist-empty">Belum ada riwayat upload.</div>'}
+function clearHist(){if(confirm('Hapus semua riwayat?')){hist=[];localStorage.setItem('hist','[]');renderHist()}}
+renderHist();
+</script>
+</body>
+</html>

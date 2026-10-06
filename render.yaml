@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: gaje-studio
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 120
+    healthCheckPath: /healthz
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATA_DIR
+        value: /tmp/gaje-studio
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: PUBLIC_ACCESS_PASSWORD
+        sync: false
