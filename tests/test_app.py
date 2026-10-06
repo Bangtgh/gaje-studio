@@ -38,6 +38,9 @@ class AppSecurityTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         response.close()
+        logo = self.client.get("/Logo.png")
+        self.assertEqual(logo.status_code, 200)
+        logo.close()
         self.assertEqual(self.client.get("/logout").status_code, 302)
         self.assertEqual(self.client.get("/api/history").status_code, 401)
 

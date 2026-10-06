@@ -18,7 +18,7 @@ applyTheme();addEventListener('storage',applyTheme);
 function splash(full){
  const u=getUI();if(!u.anim)return;
  const o=document.createElement('div');o.className='splash'+(full?'':' mini');
- o.innerHTML=`<img src="/logo.png" alt="Gaje Studio"><div class="sl-t">GAJE <b>STUDIO</b></div>`;
+ o.innerHTML=`<img src="/Logo.png" alt="Gaje Studio"><div class="sl-t">GAJE <b>STUDIO</b></div>`;
  document.body.appendChild(o);
  setTimeout(()=>o.remove(),full?1900:900);
 }
